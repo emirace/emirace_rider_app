@@ -1,5 +1,5 @@
-import { View, StyleSheet, TextInput as DefaultInput } from 'react-native';
-import React, { useState } from 'react';
+import { View, StyleSheet, TextInput as DefaultInput } from "react-native";
+import React, { useState } from "react";
 import {
   Appbar,
   Icon,
@@ -7,14 +7,15 @@ import {
   Text,
   TextInput,
   useTheme,
-} from 'react-native-paper';
-import Button from '../../../../components/Button';
-import { EditEmailNavigationProp } from '../../../../type/navigation/stack';
+} from "react-native-paper";
+import Button from "../../../../components/Button";
+import { EditEmailNavigationProp } from "../../../../type/navigation/stack";
+import useAuth from "../../../../context/AuthContext";
 
 const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
   const { colors } = useTheme();
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const { verifyField, setVerifyField } = useAuth();
+  const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
@@ -25,6 +26,18 @@ const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
   const handleVerify = () => {
     setIsVerified(true);
   };
+
+  const handleChange = (value: string) => {
+    setIsVerified(false);
+    setVerifyField((prev: any) => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        email: value,
+      },
+    }));
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <Appbar.Header mode="medium">
@@ -32,7 +45,7 @@ const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
         <Appbar.Content
           titleStyle={{
             fontSize: 30,
-            fontWeight: 'bold',
+            fontWeight: "bold",
           }}
           title="Edit your email"
         />
@@ -40,7 +53,7 @@ const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
       <View
         style={{
           paddingHorizontal: 20,
-          justifyContent: 'space-between',
+          justifyContent: "space-between",
           flex: 1,
         }}
       >
@@ -50,21 +63,21 @@ const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
           </Text>
           <TextInput
             label="Email"
-            value={email}
-            onChangeText={(text) => setEmail(text)}
+            value={verifyField.user.email}
+            onChangeText={handleChange}
             style={styles.input}
           />
           {isVerified ? (
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Icon size={20} source={'email'} color="green" />
-              <Text style={{ fontSize: 20, marginBottom: 20, color: 'green' }}>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Icon size={20} source={"email"} color="green" />
+              <Text style={{ fontSize: 20, marginBottom: 20, color: "green" }}>
                 Verified
               </Text>
             </View>
           ) : verifying ? (
             <View
               style={{
-                flexDirection: 'row',
+                flexDirection: "row",
                 backgroundColor: colors.elevation.level5,
                 //   padding: 10,
                 paddingLeft: 30,
@@ -78,12 +91,12 @@ const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
                 style={styles.codeInput}
                 selectionColor={colors.primary}
               />
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <IconButton icon={'reload'} onPress={handleSendVerify} />
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <IconButton icon={"reload"} onPress={handleSendVerify} />
                 <Button
                   mode="contained"
                   contentStyle={{ height: 40 }}
-                  labelStyle={{ fontSize: 16, fontWeight: 'bold' }}
+                  labelStyle={{ fontSize: 16, fontWeight: "bold" }}
                   onPress={() => handleVerify()}
                 >
                   Verify
@@ -91,13 +104,16 @@ const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
               </View>
             </View>
           ) : (
-            email && <Button onPress={handleSendVerify}>Verify email</Button>
+            verifyField.user.email && (
+              <Button onPress={handleSendVerify}>Verify email</Button>
+            )
           )}
         </View>
         <Button
           disabled={!isVerified}
           mode="contained"
           style={{ marginBottom: 30 }}
+          onPress={() => navigation.goBack()}
         >
           Save
         </Button>
@@ -108,7 +124,7 @@ const EditEmail: React.FC<EditEmailNavigationProp> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   input: {
-    width: '100%',
+    width: "100%",
     marginBottom: 20,
   },
   codeInput: { flex: 1, fontSize: 20 },

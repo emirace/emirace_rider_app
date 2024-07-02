@@ -9,18 +9,25 @@ import {
   useTheme,
 } from "react-native-paper";
 import Button from "./Button";
-import * as Progress from "react-native-progress";
 import { useRide } from "../context/Ride";
+import { Ride } from "../type/ride";
 
 interface Props {
   closeCall: () => void;
+  currentRide: Ride | null;
+  acceptRide: (rideId: string) => Promise<void>;
+  rejectRide: (rideId: string) => Promise<void>;
 }
 
 const WIDTH = Dimensions.get("screen").width;
 
-const CallScreen: React.FC<Props> = ({ closeCall }) => {
+const CallScreen: React.FC<Props> = ({
+  closeCall,
+  currentRide,
+  acceptRide,
+  rejectRide,
+}) => {
   const { colors } = useTheme();
-  const { acceptRide, rejectRide, currentRide, loading } = useRide();
   const bounceValue = React.useRef(new Animated.Value(1)).current;
   const animatedProgress = useRef(new Animated.Value(0)).current;
 

@@ -1,6 +1,5 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import History from "../Screens/History";
-import StackNavigator from "./Stack";
 import { RootDrawerParamList } from "../type/navigation/drawer";
 import CustomDrawerContent from "../components/CustomDrawerContent";
 import { Icon } from "react-native-paper";
@@ -10,6 +9,7 @@ import About from "../Screens/About";
 import Support from "../Screens/Support";
 import { Dimensions } from "react-native";
 import Settings from "../Screens/Settings";
+import Home from "../Screens/Home";
 
 const Drawer = createDrawerNavigator<RootDrawerParamList>();
 const WIDTH = Dimensions.get("screen").width;
@@ -42,7 +42,7 @@ export function DrawerNavigator() {
             <Icon color={color} size={24} source={"home-outline"} />
           ),
         }}
-        component={StackNavigator}
+        component={Home}
       />
 
       <Drawer.Screen

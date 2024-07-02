@@ -1,5 +1,5 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView } from "react-native";
+import React, { useState } from "react";
 import {
   Appbar,
   Card,
@@ -9,25 +9,32 @@ import {
   TextInput,
   useTheme,
   Text,
-} from 'react-native-paper';
-import Button from '../../../../components/Button';
-import { VehicleNavigationProp } from '../../../../type/navigation/stack';
+} from "react-native-paper";
+import Button from "../../../../components/Button";
+import { VehicleNavigationProp } from "../../../../type/navigation/stack";
+import useAuth from "../../../../context/AuthContext";
 
 const Vehicle: React.FC<VehicleNavigationProp> = ({ navigation }) => {
+  const { verifyField, setVerifyField } = useAuth();
   const { colors } = useTheme();
-  const [brand, setBrand] = useState('');
-  const [color, setColor] = useState('');
-  const [number, setNumber] = useState('');
-  const [year, setYear] = useState('');
-  const [model, setModel] = useState('');
+
   const [visible, setVisible] = React.useState(false);
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
 
+  const handleChange = (name: string, value: string) => {
+    setVerifyField((prev: any) => ({
+      ...prev,
+      vehicle: {
+        ...prev.vehicle,
+        [name]: value,
+      },
+    }));
+  };
   const handleSubmit = () => {
     hideModal();
-    navigation.push('VerificationStatus');
+    navigation.push("VerificationStatus");
   };
   return (
     <View style={{ flex: 1 }}>
@@ -36,7 +43,7 @@ const Vehicle: React.FC<VehicleNavigationProp> = ({ navigation }) => {
         <Appbar.Content
           titleStyle={{
             fontSize: 30,
-            fontWeight: 'bold',
+            fontWeight: "bold",
           }}
           title="Vehicle"
         />
@@ -49,8 +56,8 @@ const Vehicle: React.FC<VehicleNavigationProp> = ({ navigation }) => {
 
         <List.Item
           title="Vehicle image"
-          description="Item description"
-          onPress={() => navigation.push('VehicleImage')}
+          description="Add images"
+          onPress={() => navigation.push("VehicleImage")}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           titleStyle={styles.label}
           descriptionStyle={styles.description}
@@ -58,35 +65,35 @@ const Vehicle: React.FC<VehicleNavigationProp> = ({ navigation }) => {
         />
         <TextInput
           label="Brand"
-          value={brand}
-          onChangeText={(text) => setBrand(text)}
+          value={verifyField.vehicle.brand}
+          onChangeText={(text) => handleChange("brand", text)}
           style={styles.input}
         />
         <TextInput
           label="Model"
-          value={model}
-          onChangeText={(text) => setModel(text)}
+          value={verifyField.vehicle.model}
+          onChangeText={(text) => handleChange("model", text)}
           style={styles.input}
         />
 
         <TextInput
           label="Plate Number"
-          value={number}
-          onChangeText={(text) => setNumber(text)}
+          value={verifyField.vehicle.number}
+          onChangeText={(text) => handleChange("number", text)}
           style={styles.input}
         />
 
         <TextInput
           label="Year"
-          value={year}
-          onChangeText={(text) => setYear(text)}
+          value={verifyField.vehicle.year}
+          onChangeText={(text) => handleChange("year", text)}
           style={styles.input}
         />
 
         <TextInput
           label="Color"
-          value={color}
-          onChangeText={(text) => setColor(text)}
+          value={verifyField.vehicle.color}
+          onChangeText={(text) => handleChange("color", text)}
           style={styles.input}
         />
       </ScrollView>
@@ -94,6 +101,14 @@ const Vehicle: React.FC<VehicleNavigationProp> = ({ navigation }) => {
         mode="contained"
         style={{ marginHorizontal: 20, marginBottom: 30, marginTop: 20 }}
         onPress={showModal}
+        disabled={
+          !verifyField.vehicle.color ||
+          !verifyField.vehicle.brand ||
+          !verifyField.vehicle.model ||
+          !verifyField.vehicle.number ||
+          !verifyField.vehicle.year ||
+          !verifyField.vehicle.image.front
+        }
       >
         Save
       </Button>
@@ -126,24 +141,24 @@ const Vehicle: React.FC<VehicleNavigationProp> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   input: {
-    width: '100%',
+    width: "100%",
     marginBottom: 20,
   },
   inputImage: {
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
     borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     height: 300,
     marginBottom: 30,
   },
   description: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
   label: {
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 18,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     paddingVertical: 10,
   },
 });

@@ -1,24 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   TextInput,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { ActivityIndicator, Appbar, Text, useTheme } from 'react-native-paper';
-import useAuth from '../../context/AuthContext';
-import { TokenNavigationProp } from '../../type/navigation/stack';
-import TokenInput from '../../components/TokenInput';
-import Button from '../../components/Button';
+} from "react-native";
+import { ActivityIndicator, Appbar, Text, useTheme } from "react-native-paper";
+import useAuth from "../../context/AuthContext";
+import { TokenNavigationProp } from "../../type/navigation/stack";
+import TokenInput from "../../components/TokenInput";
+import Button from "../../components/Button";
 
 const Token: React.FC<TokenNavigationProp> = ({ navigation, route }) => {
-  const { sendVerifyOtp, verifyEmail, error } = useAuth();
+  const { sendVerifyOtp, verifyOtp, loading, error } = useAuth();
   const { colors } = useTheme();
   const { phone } = route.params;
-  const [loading, setLoading] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
   const [resendTimer, setResendTimer] = useState<number>(60);
   const inputRefs: React.RefObject<TextInput>[] = Array.from(
     { length: 5 },
@@ -43,11 +41,11 @@ const Token: React.FC<TokenNavigationProp> = ({ navigation, route }) => {
   const handleInputChange = (index: number, text: string) => {
     setToken((prevToken) => {
       // Copy the previous token to modify the character at the current index
-      const newToken = prevToken.split('');
+      const newToken = prevToken.split("");
       newToken[index] = text;
 
       // Join the modified characters to form the updated token
-      const updatedToken = newToken.join('');
+      const updatedToken = newToken.join("");
 
       // If the current input is not empty, move focus to the next input
       if (text && index < 4) {
@@ -65,35 +63,31 @@ const Token: React.FC<TokenNavigationProp> = ({ navigation, route }) => {
     // If the backspace key is pressed and the current input is empty,
     // move focus to the previous input and delete the character there
 
-    if (key === 'Backspace' && !token[index] && index > 0) {
+    if (key === "Backspace" && !token[index] && index > 0) {
       inputRefs[index - 1].current?.focus();
-      handleInputChange(index - 1, '');
+      handleInputChange(index - 1, "");
     }
   };
 
   const handleResend = async () => {
-    setSendingOtp(true);
     const result = await sendVerifyOtp({ phone });
     if (result) {
       setResendTimer(60);
     }
-    setSendingOtp(false);
     // Add logic to resend the OTP
   };
 
   const handleVerify = async () => {
-    setLoading(true);
-    // const result = await verifyEmail({ token });
+    // const result = await verifyOtp({ token });
     // if (result) {
     //   // onVerify();
     // }
-    navigation.push('UserInfo');
-    setLoading(false);
+    navigation.push("UserInfo");
   };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
       <Appbar.Header mode="medium">
@@ -105,22 +99,22 @@ const Token: React.FC<TokenNavigationProp> = ({ navigation, route }) => {
         <Appbar.Content
           titleStyle={{
             fontSize: 30,
-            fontWeight: 'bold',
+            fontWeight: "bold",
           }}
           title="Enter OTP"
         />
       </Appbar.Header>
       <View style={styles.content}>
         <View>
-          <Text style={{ marginBottom: 5, fontWeight: 'bold' }}>
-            We have send you an OTP on{' '}
-            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{phone}</Text>
+          <Text style={{ marginBottom: 5, fontWeight: "bold" }}>
+            We have send you an OTP on{" "}
+            <Text style={{ fontSize: 18, fontWeight: "bold" }}>{phone}</Text>
           </Text>
           <Text
             onPress={() => navigation.goBack()}
             style={{
               marginBottom: 20,
-              fontWeight: 'bold',
+              fontWeight: "bold",
               color: colors.primary,
             }}
           >
@@ -139,41 +133,49 @@ const Token: React.FC<TokenNavigationProp> = ({ navigation, route }) => {
               />
             ))}
           </View>
-          {error ? (
-            <Text style={{ color: 'red', marginTop: 8 }}>{error}</Text>
+          {error.verifyOtp ? (
+            <Text style={{ color: "red", marginTop: 8 }}>
+              {error.verifyOtp}
+            </Text>
           ) : null}
           <View style={styles.count}>
-            {sendingOtp ? (
+            {loading.sendVerifyOtp ? (
               <ActivityIndicator />
             ) : resendTimer > 0 ? (
               <Text>
-                Resend OTP in{' '}
-                <Text style={{ fontWeight: 'bold', color: colors.primary }}>
+                Resend OTP in{" "}
+                <Text style={{ fontWeight: "bold", color: colors.primary }}>
                   {`${Math.floor(resendTimer / 60)
                     .toString()
-                    .padStart(2, '0')}:${(resendTimer % 60)
+                    .padStart(2, "0")}:${(resendTimer % 60)
                     .toString()
-                    .padStart(2, '0')}`}
-                </Text>{' '}
+                    .padStart(2, "0")}`}
+                </Text>{" "}
                 seconds
               </Text>
             ) : (
               <Button
                 onPress={handleResend}
-                labelStyle={{ fontWeight: 'bold' }}
+                labelStyle={{ fontWeight: "bold" }}
               >
                 Resend OTP
               </Button>
             )}
           </View>
+
+          {error.sendVerifyOtp ? (
+            <Text style={{ color: "red", marginTop: 8 }}>
+              {error.sendVerifyOtp}
+            </Text>
+          ) : null}
         </View>
         {/* Add a button or any other UI element for verifying the token */}
         <Button
           mode="contained"
           style={styles.verifyButton}
           onPress={handleVerify}
-          loading={loading}
-          disabled={token.length < 5 || loading}
+          loading={loading.verifyOtp}
+          disabled={token.length < 5 || loading.verifyOtp}
         >
           Verify
         </Button>
@@ -188,20 +190,20 @@ const styles = StyleSheet.create({
     // padding: 20,
     flex: 1,
   },
-  content: { justifyContent: 'space-between', flex: 1, padding: 20 },
+  content: { justifyContent: "space-between", flex: 1, padding: 20 },
   inputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   input: {
     width: 60,
     height: 60,
     borderRadius: 5,
-    textAlign: 'center',
+    textAlign: "center",
   },
   count: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     paddingVertical: 30,
   },
   verifyButton: {

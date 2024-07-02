@@ -13,11 +13,13 @@ import CustomBackdrop from "../components/CustomBackdrop";
 import TripPlanner from "../components/TripPlanner";
 import Task from "../components/Task";
 import { useLocation } from "../context/Location";
+import { useRide } from "../context/Ride";
 const WIDTH = Dimensions.get("screen").width;
 
 const Home: React.FC<any> = ({ navigation }) => {
   const { colors } = useTheme();
   const { loading, location } = useLocation();
+  const { rides } = useRide();
   const bottomSheetModalRef = useRef<BottomSheet>(null);
   const plannerRef = useRef<BottomSheetModal>(null);
 
@@ -98,6 +100,7 @@ const Home: React.FC<any> = ({ navigation }) => {
           backgroundColor: colors.primary,
           width: WIDTH / 4,
         }}
+        // enableDynamicSizing
       >
         <Task openPlanner={openPlanner} />
       </BottomSheet>
@@ -116,7 +119,10 @@ const Home: React.FC<any> = ({ navigation }) => {
         }}
         backdropComponent={(props) => <CustomBackdrop {...props} />}
       >
-        <TripPlanner closePlanner={() => plannerRef.current?.dismiss()} />
+        <TripPlanner
+          rides={rides}
+          closePlanner={() => plannerRef.current?.dismiss()}
+        />
       </BottomSheetModal>
     </View>
   );

@@ -15,8 +15,9 @@ import { dark_theme, light_theme } from "./constant/colors";
 import useTheme from "./context/ThemeContext";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardAvoidingView, Platform } from "react-native";
-import { DrawerNavigator } from "./navigation/Drawer";
 import { LocationProvider } from "./context/Location";
+import { RideProvider } from "./context/Ride";
+import StackNavigator from "./navigation/Stack";
 
 const paperLighttheme = {
   ...MD3DarkTheme,
@@ -45,16 +46,18 @@ const Main = () => {
   return (
     <PaperProvider theme={paperTheme}>
       <NavigationContainer theme={paperTheme}>
-        <BottomSheetModalProvider>
-          <LocationProvider>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-              style={{ flex: 1 }}
-            >
-              <DrawerNavigator />
-            </KeyboardAvoidingView>
-          </LocationProvider>
-        </BottomSheetModalProvider>
+        <LocationProvider>
+          <BottomSheetModalProvider>
+            <RideProvider>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+              >
+                <StackNavigator />
+              </KeyboardAvoidingView>
+            </RideProvider>
+          </BottomSheetModalProvider>
+        </LocationProvider>
       </NavigationContainer>
     </PaperProvider>
   );

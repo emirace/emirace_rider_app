@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import React, { useState } from "react";
+import { View, StyleSheet, Image } from "react-native";
 import {
   TextInput,
   Text,
@@ -8,12 +8,34 @@ import {
   IconButton,
   List,
   Divider,
-} from 'react-native-paper';
-import Button from '../../../../components/Button';
-import { UserInfoNavigationProp } from '../../../../type/navigation/stack';
+} from "react-native-paper";
+import * as ImagePicker from "expo-image-picker";
+import Button from "../../../../components/Button";
+import { UserInfoNavigationProp } from "../../../../type/navigation/stack";
+import useAuth from "../../../../context/AuthContext";
 
 const UserInfo: React.FC<UserInfoNavigationProp> = ({ navigation }) => {
+  const { verifyField, setVerifyField } = useAuth();
   const { colors } = useTheme();
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setVerifyField((prev: any) => ({
+        ...prev,
+        user: {
+          ...prev.user,
+          image: result.assets[0].uri,
+        },
+      }));
+    }
+  };
 
   return (
     <View>
@@ -22,11 +44,21 @@ const UserInfo: React.FC<UserInfoNavigationProp> = ({ navigation }) => {
         <Appbar.Content
           titleStyle={{
             fontSize: 30,
-            fontWeight: 'bold',
+            fontWeight: "bold",
           }}
           title="User Info"
         />
-        <Button onPress={() => navigation.push('Vehicle')}>Save</Button>
+        <Button
+          onPress={() => navigation.push("Vehicle")}
+          disabled={
+            !verifyField.user.image ||
+            !verifyField.user.address.image ||
+            !verifyField.user.name.image ||
+            !verifyField.user.email
+          }
+        >
+          Save
+        </Button>
       </Appbar.Header>
       <View
         style={[
@@ -34,34 +66,56 @@ const UserInfo: React.FC<UserInfoNavigationProp> = ({ navigation }) => {
           { backgroundColor: colors.elevation.level1 },
         ]}
       >
-        <Image src="" style={styles.image} />
-        <Text style={styles.label}>Profile phone</Text>
-        <IconButton icon="pen" style={styles.edit} />
+        <Image
+          source={
+            verifyField.user.image
+              ? { uri: verifyField.user.image }
+              : require("../../../../../assets/images/defaultProfile.png")
+          }
+          style={styles.image}
+        />
+        <Text style={styles.label}>Profile photo</Text>
+        <IconButton icon="pen" style={styles.edit} onPress={pickImage} />
       </View>
       <View style={{ padding: 20 }}>
         <List.Item
           title="Full name"
-          description="Item description"
-          onPress={() => navigation.push('EditFullName')}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          titleStyle={styles.label}
-          descriptionStyle={styles.description}
-        />
-        <Divider />
-
-        <List.Item
-          title="email"
-          description="Item description"
-          onPress={() => navigation.push('EditEmail')}
+          description={
+            verifyField.user.name.firstName
+              ? verifyField.user.name.firstName +
+                " " +
+                verifyField.user.name.lastName
+              : "Enter your full name"
+          }
+          onPress={() => navigation.push("EditFullName")}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           titleStyle={styles.label}
           descriptionStyle={styles.description}
         />
         <Divider />
         <List.Item
-          title="location"
-          description="Item description"
-          onPress={() => navigation.push('EditLocation')}
+          title="email"
+          description={
+            verifyField.user.email ? verifyField.user.email : "Enter your email"
+          }
+          onPress={() => navigation.push("EditEmail")}
+          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          titleStyle={styles.label}
+          descriptionStyle={styles.description}
+        />
+        <Divider />
+        <List.Item
+          title="address"
+          description={
+            verifyField.user.address.street
+              ? verifyField.user.address.number +
+                " " +
+                verifyField.user.address.street +
+                " " +
+                verifyField.user.address.state
+              : "Enter your address"
+          }
+          onPress={() => navigation.push("EditLocation")}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           titleStyle={styles.label}
           descriptionStyle={styles.description}
@@ -76,28 +130,28 @@ const styles = StyleSheet.create({
   imageContainer: {
     padding: 20,
     paddingTop: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   image: {
     height: 150,
     width: 150,
     borderRadius: 80,
-    backgroundColor: 'black',
+    backgroundColor: "black",
   },
   label: {
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 18,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     paddingVertical: 10,
   },
   edit: {
-    position: 'absolute',
+    position: "absolute",
     right: 20,
     top: 20,
   },
   description: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

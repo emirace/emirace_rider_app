@@ -18,7 +18,6 @@ interface RideType {
   rides: Ride[];
   loading: { [key: string]: boolean };
   error: { [key: string]: string | null };
-  currentRide: Ride | null;
   cancelRide: (rideId: string) => Promise<void>;
   acceptRide: (rideId: string) => Promise<void>;
   rejectRide: (rideId: string) => Promise<void>;
@@ -40,15 +39,8 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
 
   const callRef = useRef<BottomSheetModal>(null);
 
-  const showCallScreen = () => {
-    if (callRef.current) {
-      callRef.current.present();
-    }
-  };
-
   useEffect(() => {
     socket.on("rideRequested", (newRide: Ride) => {
-      setRides((prevRides) => [...prevRides, newRide]);
       setCurrentRide(newRide);
       showCallScreen();
     });
@@ -57,6 +49,12 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
       socket.close();
     };
   }, []);
+
+  const showCallScreen = () => {
+    if (callRef.current) {
+      callRef.current.present();
+    }
+  };
 
   const setLoadingState = (action: string, state: boolean) => {
     setLoading((prev) => ({ ...prev, [action]: state }));
@@ -118,7 +116,6 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
         rides,
         loading,
         error,
-        currentRide,
         cancelRide,
         acceptRide,
         rejectRide,
@@ -147,7 +144,12 @@ export const RideProvider = ({ children }: { children: ReactNode }) => {
       >
         {/* call screem */}
         <BottomSheetView>
-          <CallScreen closeCall={() => callRef.current?.dismiss()} />
+          <CallScreen
+            currentRide={currentRide}
+            closeCall={() => callRef.current?.dismiss()}
+            acceptRide={acceptRide}
+            rejectRide={rejectRide}
+          />
         </BottomSheetView>
       </BottomSheetModal>
     </RideContext.Provider>

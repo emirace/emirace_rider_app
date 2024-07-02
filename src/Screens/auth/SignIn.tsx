@@ -1,5 +1,5 @@
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import React, { useRef, useState } from 'react';
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import React, { useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -7,19 +7,21 @@ import {
   TextInput,
   Image,
   Platform,
-} from 'react-native';
-import { Text, Title, useTheme, Icon, Checkbox } from 'react-native-paper';
-import CustomBackdrop from '../../components/CustomBackdrop';
-import CountryList, { countryFlags } from '../../components/signIn/CountryList';
-import { SignInNavigationProp } from '../../type/navigation/stack';
-import Button from '../../components/Button';
+  ScrollView,
+} from "react-native";
+import { Text, Title, useTheme, Icon, Checkbox } from "react-native-paper";
+import CustomBackdrop from "../../components/CustomBackdrop";
+import CountryList, { countryFlags } from "../../components/signIn/CountryList";
+import { SignInNavigationProp } from "../../type/navigation/stack";
+import Button from "../../components/Button";
 
 const SignIn: React.FC<SignInNavigationProp> = ({ navigation }) => {
   const { colors } = useTheme();
-  const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('+234'); // Default country code
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+234"); // Default country code
   const [privacy, setPrivacy] = useState(false);
   const [term, setTerm] = useState(false);
+  const [error, setError] = useState("");
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -33,19 +35,37 @@ const SignIn: React.FC<SignInNavigationProp> = ({ navigation }) => {
     setCountryCode(code);
   };
 
+  const handlePhoneChange = (text: string) => {
+    // Validate phone number format and limit length to 10 digits
+    const phoneRegex = /^[0-9]{0,10}$/;
+    if (phoneRegex.test(text)) {
+      setPhone(text);
+      setError(""); // Clear error when input is valid
+    }
+  };
+
+  const isPhoneNumberComplete = () => {
+    // Example validation, assuming the complete phone number should be 10 digits
+    return phone.length === 10;
+  };
+
   const handleContinuePress = () => {
-    if (phone) {
+    if (isPhoneNumberComplete() && privacy && term) {
       // Perform authentication or navigation logic here
-      // For now, just show a snackbar
-      navigation.push('Token', { phone });
+      navigation.push("Token", { phone: countryCode + phone });
+    } else {
+      // Set an error message if the phone number is incomplete
+      setError("Please enter a valid phone number.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={{ justifyContent: 'space-between', flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+      >
         <Image
-          source={require('../../../assets/adaptive-icon.png')}
+          source={require("../../../assets/adaptive-icon.png")}
           style={styles.logo}
           alt="logo"
         />
@@ -70,17 +90,19 @@ const SignIn: React.FC<SignInNavigationProp> = ({ navigation }) => {
                 source={countryFlags[countryCode]}
                 style={styles.flagIcon}
               />
-              <Icon source={'chevron-down'} size={25} />
+              <Icon source={"chevron-down"} size={25} />
               <Text style={styles.countryCodeText}>{countryCode}</Text>
             </TouchableOpacity>
             <TextInput
               value={phone}
-              onChangeText={(text) => setPhone(text)}
+              onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
               style={[styles.phoneNumberInput, { color: colors.onBackground }]}
               cursorColor={colors.onBackground}
+              maxLength={10} // Limit input to 10 digits
             />
           </View>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
 
         <View style={{ marginBottom: 30 }}>
@@ -90,7 +112,7 @@ const SignIn: React.FC<SignInNavigationProp> = ({ navigation }) => {
               personal data will be processed by you
             </Text>
             <Checkbox.Android
-              status={privacy ? 'checked' : 'unchecked'}
+              status={privacy ? "checked" : "unchecked"}
               onPress={() => {
                 setPrivacy(!privacy);
               }}
@@ -101,7 +123,7 @@ const SignIn: React.FC<SignInNavigationProp> = ({ navigation }) => {
               I have read and accept the Terms of Use
             </Text>
             <Checkbox.Android
-              status={term ? 'checked' : 'unchecked'}
+              status={term ? "checked" : "unchecked"}
               onPress={() => {
                 setTerm(!term);
               }}
@@ -114,17 +136,17 @@ const SignIn: React.FC<SignInNavigationProp> = ({ navigation }) => {
             style={styles.continueButton}
             uppercase
             contentStyle={{ height: 50 }}
-            disabled={!phone || !privacy || !term}
+            disabled={!isPhoneNumberComplete() || !privacy || !term}
           >
             Continue
           </Button>
         </View>
-      </View>
+      </ScrollView>
 
       <BottomSheetModal
         ref={bottomSheetModalRef}
         index={0}
-        snapPoints={['100%']}
+        snapPoints={["100%"]}
         backgroundStyle={{
           backgroundColor: colors.background,
         }}
@@ -151,15 +173,15 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 30,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
   },
   instruction: {
     marginBottom: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   inputContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
     borderRadius: 20,
     padding: 5,
@@ -170,8 +192,8 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   countryCodeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
     borderRadius: 5,
   },
@@ -185,36 +207,42 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   dropdownContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 70, // Adjust as needed
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     elevation: 4,
     borderRadius: 5,
   },
   dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
   },
   continueButton: {
     marginTop: 30,
   },
   listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     marginBottom: 15,
   },
-  listText: { fontWeight: '600', flex: 1 },
+  listText: { fontWeight: "600", flex: 1 },
   logo: {
     width: 100,
     height: 100,
-    objectFit: 'contain',
+    objectFit: "contain",
     marginVertical: 40,
-    alignSelf: 'center',
+    alignSelf: "center",
+  },
+  errorText: {
+    color: "red",
+    marginTop: -10,
+    marginBottom: 10,
+    marginLeft: 10,
   },
 });
 

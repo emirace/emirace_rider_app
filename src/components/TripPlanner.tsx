@@ -1,13 +1,13 @@
 import { View, StyleSheet } from "react-native";
 import React, { useEffect, useState, useMemo } from "react";
 import { Appbar, List, Text } from "react-native-paper";
-import { useRide } from "../context/Ride";
 import { Ride } from "../type/ride";
 import { calculateDistance } from "../utils/ride";
 import { useLocation } from "../context/Location";
 
 interface Props {
   closePlanner: () => void;
+  rides: Ride[];
 }
 
 const sortedRidesByProximity = (
@@ -34,8 +34,7 @@ const sortedRidesByProximity = (
   });
 };
 
-const TripPlanner: React.FC<Props> = ({ closePlanner }) => {
-  const { rides } = useRide();
+const TripPlanner: React.FC<Props> = ({ closePlanner, rides }) => {
   const { location } = useLocation();
   const [sortedRides, setSortedRides] = useState<Ride[]>([]);
 

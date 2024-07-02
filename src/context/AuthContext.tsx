@@ -1,264 +1,229 @@
-// AuthContext.tsx
 import React, {
   createContext,
   useState,
   useEffect,
   ReactNode,
   useContext,
-} from 'react';
+} from "react";
 import {
-  createUserChangePasswordService,
-  forgetPasswordService,
-  getAllUserService,
-  getUserByIdService,
-  getUserService,
-  loginUser,
-  logoutUser,
-  sendVerifyEmailService,
   sendVerifyOtpService,
-  updateUserByIdService,
-  updateUserService,
-  verifyEmailService,
   verifyOtpService,
-} from '../services/auth';
-import { UpdateFields, User } from '../type/user';
-import * as SecureStore from 'expo-secure-store';
+  verifyEmailService,
+  sendVerifyEmailService,
+  getUserService,
+  updateUserService,
+} from "../services/auth";
+import { UpdateFields, User, VerifyFieldState } from "../type/user";
+import * as SecureStore from "expo-secure-store";
 
 interface Props {
   children?: ReactNode;
 }
 
+interface LoadingState {
+  sendVerifyOtp: boolean;
+  verifyOtp: boolean;
+  verifyEmail: boolean;
+  sendVerifyEmail: boolean;
+  getUser: boolean;
+  updateUser: boolean;
+}
+
+interface ErrorState {
+  sendVerifyOtp: string | null;
+  verifyOtp: string | null;
+  verifyEmail: string | null;
+  sendVerifyEmail: string | null;
+  getUser: string | null;
+  updateUser: string | null;
+}
+
+const initialLoadingState: LoadingState = {
+  sendVerifyOtp: false,
+  verifyOtp: false,
+  verifyEmail: false,
+  sendVerifyEmail: false,
+  getUser: false,
+  updateUser: false,
+};
+
+const initialErrorState: ErrorState = {
+  sendVerifyOtp: null,
+  verifyOtp: null,
+  verifyEmail: null,
+  sendVerifyEmail: null,
+  getUser: null,
+  updateUser: null,
+};
+
+const initialVerifyField = {
+  user: {
+    image: "",
+    name: {
+      firstName: "",
+      lastName: "",
+      image: "",
+    },
+    email: "",
+    address: {
+      number: "",
+      street: "",
+      landmark: "",
+      lga: "",
+      state: "Edo",
+      image: "",
+    },
+  },
+  vehicle: {
+    image: {
+      front: "",
+      back: "",
+      side: "",
+    },
+    brand: "",
+    model: "",
+    number: "",
+    year: "",
+    color: "",
+  },
+};
+
 const AuthContext = createContext<{
   user: User | null;
-  error: string | null;
-  loading: boolean;
-  authErrorModalOpen: boolean;
-  setAuthErrorModalOpen: (value: boolean) => void;
-  sendVerifyEmail: (credentials: { phone: string }) => Promise<boolean>;
+  loading: LoadingState;
+  error: ErrorState;
+  verifyField: VerifyFieldState;
+  setVerifyField: (value: any) => void;
   sendVerifyOtp: (credentials: { phone: string }) => Promise<boolean>;
-  verifyEmail: (credentials: { token: string }) => Promise<boolean>;
-  createUserChangePassword: (tokenData: {
-    password: string;
-    token: string;
-  }) => Promise<boolean>;
-  login: (credentials: { email: string; password: string }) => Promise<boolean>;
-  sendForgetPasswordEmail: (credentials: { email: string }) => Promise<boolean>;
   getUser: () => Promise<User | null>;
-  getAllUser: () => Promise<User[] | null>;
-  getUserById: (id: string) => Promise<User | null>;
+  verifyEmail: (credentials: { token: string }) => Promise<boolean>;
+  sendVerifyEmail: (credentials: { phone: string }) => Promise<boolean>;
   updateUser: (userData: UpdateFields) => Promise<User | null>;
-  updateUserById: (id: string, userData: UpdateFields) => Promise<User | null>;
   verifyOtp: (credentials: { token: string }) => Promise<boolean>;
-  logout: () => void;
 } | null>(null);
 
 export const AuthProvider: React.FC<Props> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [verifyField, setVerifyField] =
+    useState<VerifyFieldState>(initialVerifyField);
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [authErrorModalOpen, setAuthErrorModalOpen] = useState(false);
+  const [loading, setLoading] = useState<LoadingState>(initialLoadingState);
+  const [error, setError] = useState<ErrorState>(initialErrorState);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleError = (error: any) => {
-    setLoading(false);
-
-    // Check if the error indicates an invalid or expired token
-    if (error === 'Token expired' || error === 'Invalid token') {
-      setError('');
-      // Set the state to open the auth error modal
-      setAuthErrorModalOpen(true);
-    } else {
-      setError(error || 'An error occurred.');
-    }
+  const handleLoading = (key: keyof LoadingState, state: boolean) => {
+    setLoading((prev) => ({ ...prev, [key]: state }));
   };
 
-  const sendVerifyEmail = async (userData: { phone: string }) => {
-    try {
-      setError('');
-      const response = await sendVerifyEmailService(userData);
-      return !!response;
-    } catch (error) {
-      handleError(error);
-      return false;
-    }
+  const handleError = (key: keyof ErrorState, error: any) => {
+    setError((prev) => ({ ...prev, [key]: error || "An error occurred." }));
+  };
+
+  const clearError = (key: keyof ErrorState) => {
+    setError((prev) => ({ ...prev, [key]: null }));
   };
 
   const sendVerifyOtp = async (userData: { phone: string }) => {
+    handleLoading("sendVerifyOtp", true);
+    clearError("sendVerifyOtp");
     try {
-      setError('');
       const response = await sendVerifyOtpService(userData);
+      handleLoading("sendVerifyOtp", false);
       return !!response;
     } catch (error) {
-      handleError(error);
-      return false;
-    }
-  };
-
-  const verifyEmail = async (tokenData: { token: string }) => {
-    try {
-      setError('');
-      const response = await verifyEmailService(tokenData);
-      return !!response;
-    } catch (error) {
-      handleError(error);
+      handleLoading("sendVerifyOtp", false);
+      handleError("sendVerifyOtp", error);
       return false;
     }
   };
 
   const verifyOtp = async (tokenData: { token: string }) => {
+    handleLoading("verifyOtp", true);
+    clearError("verifyOtp");
     try {
-      setError('');
       const response = await verifyOtpService(tokenData);
+      setAuthToken(response);
+      handleLoading("verifyOtp", false);
       return !!response;
     } catch (error) {
-      handleError(error);
+      handleLoading("verifyOtp", false);
+      handleError("verifyOtp", error);
       return false;
     }
   };
 
-  const createUserChangePassword = async (tokenData: {
-    password: string;
-    token: string;
-  }) => {
+  const verifyEmail = async (tokenData: { token: string }) => {
+    handleLoading("verifyEmail", true);
+    clearError("verifyEmail");
     try {
-      setError('');
-      const response = await createUserChangePasswordService(tokenData);
+      const response = await verifyEmailService(tokenData);
+      handleLoading("verifyEmail", false);
       return !!response;
     } catch (error) {
-      handleError(error);
+      handleLoading("verifyEmail", false);
+      handleError("verifyEmail", error);
       return false;
     }
   };
 
-  const login = async (credentials: { email: string; password: string }) => {
+  const sendVerifyEmail = async (userData: { phone: string }) => {
+    handleLoading("sendVerifyEmail", true);
+    clearError("sendVerifyEmail");
     try {
-      setError('');
-      // setLoading(true);
-      const authenticatedToken = await loginUser(credentials);
-      if (authenticatedToken) {
-        setAuthToken(authenticatedToken);
-        setAuthErrorModalOpen(false);
-        return true;
-      }
-      // setLoading(false);
-      return false;
-    } catch (error) {
-      handleError(error);
-      return false;
-    }
-  };
-
-  const sendForgetPasswordEmail = async (userData: { email: string }) => {
-    try {
-      setError('');
-      const response = await forgetPasswordService(userData);
+      const response = await sendVerifyEmailService(userData);
+      handleLoading("sendVerifyEmail", false);
       return !!response;
     } catch (error) {
-      handleError(error);
+      handleLoading("sendVerifyEmail", false);
+      handleError("sendVerifyEmail", error);
       return false;
     }
   };
 
   const getUser = async () => {
+    handleLoading("getUser", true);
+    clearError("getUser");
     try {
-      setError('');
-      setLoading(true);
       const authenticatedUser = await getUserService();
       if (authenticatedUser) {
         setUser(authenticatedUser);
+        handleLoading("getUser", false);
         return authenticatedUser;
       }
+      handleLoading("getUser", false);
       return null;
     } catch (error) {
-      handleError(error);
+      handleLoading("getUser", false);
+      handleError("getUser", error);
       return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getAllUser = async () => {
-    try {
-      setError('');
-      setLoading(true);
-      const allUser = await getAllUserService();
-      if (allUser) {
-        return allUser;
-      }
-      return null;
-    } catch (error) {
-      handleError(error);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getUserById = async (id: string) => {
-    try {
-      setError('');
-      setLoading(true);
-      const user = await getUserByIdService(id);
-      if (user) {
-        return user;
-      }
-      return null;
-    } catch (error) {
-      handleError(error);
-      return null;
-    } finally {
-      setLoading(false);
     }
   };
 
   const updateUser = async (userData: UpdateFields) => {
+    handleLoading("updateUser", true);
+    clearError("updateUser");
     try {
-      setError('');
       const updatedUser = await updateUserService(userData);
       if (updatedUser) {
         setUser(updatedUser);
+        handleLoading("updateUser", false);
         return updatedUser;
       }
+      handleLoading("updateUser", false);
       return null;
     } catch (error) {
-      handleError(error);
+      handleLoading("updateUser", false);
+      handleError("updateUser", error);
       return null;
     }
-  };
-
-  const updateUserById = async (id: string, userData: UpdateFields) => {
-    try {
-      setError('');
-      const updatedUser: User | null = await updateUserByIdService(
-        id,
-        userData
-      );
-      if (updatedUser) {
-        return updatedUser;
-      }
-      return null;
-    } catch (error) {
-      handleError(error);
-      return null;
-    }
-  };
-
-  const logout = async () => {
-    // await logoutUser();
-    setUser(null);
-    await SecureStore.deleteItemAsync('authToken');
-    console.log('logout');
   };
 
   useEffect(() => {
     const checkUser = async () => {
-      const token = await SecureStore.getItemAsync('authToken');
+      const token = await SecureStore.getItemAsync("authToken");
       const savedToken = authToken || token;
       if (savedToken) {
         await getUser();
       }
-      setLoading(false);
     };
     checkUser();
   }, [authToken]);
@@ -267,23 +232,16 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        error,
         loading,
-        authErrorModalOpen,
-        setAuthErrorModalOpen,
-        sendVerifyOtp,
+        error,
+        verifyField,
+        setVerifyField,
         sendVerifyEmail,
         verifyEmail,
+        sendVerifyOtp,
         verifyOtp,
-        createUserChangePassword,
-        login,
-        sendForgetPasswordEmail,
         getUser,
-        getAllUser,
-        getUserById,
         updateUser,
-        updateUserById,
-        logout,
       }}
     >
       {children}
@@ -294,7 +252,7 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
 const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
